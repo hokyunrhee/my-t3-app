@@ -7,6 +7,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 
 import { type RouterOutputs, api } from "~/utils/api";
 import { LoadingSpinner } from "~/components/loading-spinner";
+import { useState } from "react";
 
 dayjs.extend(relativeTime);
 
@@ -14,7 +15,7 @@ const Home: NextPage = () => {
   const { isSignedIn, isLoaded: userLoaded } = useUser();
 
   // start fetching ASAP
-  api.post.getAll.useQuery();
+  api.posts.getAll.useQuery();
 
   if (!userLoaded) return <div />;
 
@@ -48,7 +49,7 @@ const Home: NextPage = () => {
 export default Home;
 
 const Feed = () => {
-  const { data, isLoading: postLoading } = api.post.getAll.useQuery();
+  const { data, isLoading: postLoading } = api.posts.getAll.useQuery();
 
   if (postLoading) {
     return (
@@ -69,7 +70,7 @@ const Feed = () => {
   );
 };
 
-type PostWithUser = RouterOutputs["post"]["getAll"][number];
+type PostWithUser = RouterOutputs["posts"]["getAll"][number];
 
 const Post = (props: PostWithUser) => {
   const { post, author } = props;
@@ -92,14 +93,27 @@ const Post = (props: PostWithUser) => {
             </span>
           </span>
         </div>
-        <span>{post.content}</span>
+        <span className="text-xl">{post.content}</span>
       </div>
     </div>
   );
 };
 
 const CreatePostWizard = () => {
+  const [input, setInput] = useState("");
   const { user } = useUser();
+  const ctx = api.useContext();
+  const { mutate, isLoading: isPosting } = api.posts.create.useMutation({
+    onSuccess: () => {
+      setInput("");
+      void ctx.posts.getAll.invalidate();
+    },
+  });
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    mutate({ content: input });
+  };
 
   if (!user) return null;
 
@@ -112,11 +126,19 @@ const CreatePostWizard = () => {
         width={56}
         height={56}
       />
-      <input
-        type="text"
-        placeholder="type some emojis!"
-        className="grow bg-transparent outline-none"
-      />
+      <form className="flex grow gap-3" onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="type some emojis!"
+          className="grow bg-transparent outline-none"
+          value={input}
+          disabled={isPosting}
+          onChange={(event) => setInput(event.currentTarget.value)}
+        />
+        <button type="submit" disabled={isPosting}>
+          post
+        </button>
+      </form>
     </div>
   );
 };
