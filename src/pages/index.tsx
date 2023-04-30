@@ -8,6 +8,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { type RouterOutputs, api } from "~/utils/api";
 import { LoadingSpinner } from "~/components/loading-spinner";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 dayjs.extend(relativeTime);
 
@@ -108,6 +109,15 @@ const CreatePostWizard = () => {
       setInput("");
       void ctx.posts.getAll.invalidate();
     },
+    onError: (error) => {
+      const [errorMessage] = error.data?.zodError?.fieldErrors?.content ?? [];
+
+      if (errorMessage) {
+        toast.error(errorMessage);
+      } else {
+        toast.error("Failed to post! Please try again later.");
+      }
+    },
   });
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -136,7 +146,7 @@ const CreatePostWizard = () => {
           onChange={(event) => setInput(event.currentTarget.value)}
         />
         <button type="submit" disabled={isPosting}>
-          post
+          {isPosting ? <LoadingSpinner /> : "post"}
         </button>
       </form>
     </div>
