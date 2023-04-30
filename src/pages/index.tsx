@@ -6,17 +6,17 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
 import { type RouterOutputs, api } from "~/utils/api";
+import { LoadingSpinner } from "~/components/loading-spinner";
 
 dayjs.extend(relativeTime);
 
 const Home: NextPage = () => {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, isLoaded: userLoaded } = useUser();
 
-  const { data, isLoading } = api.post.getAll.useQuery();
+  // start fetching ASAP
+  api.post.getAll.useQuery();
 
-  if (isLoading) return <div>Loading...</div>;
-
-  if (!data) return <div>Something went wrong</div>;
+  if (!userLoaded) return <div />;
 
   return (
     <>
@@ -27,7 +27,7 @@ const Home: NextPage = () => {
       </Head>
 
       <main className="flex h-screen justify-center">
-        <div className="h-full w-full border-x border-slate-400 md:max-w-2xl">
+        <div className="flex h-full w-full flex-col border-x border-slate-400 md:max-w-2xl">
           <div className="flex border-b border-slate-400 p-4">
             {!isSignedIn ? (
               <div className="flex justify-center">
@@ -37,11 +37,8 @@ const Home: NextPage = () => {
               <CreatePostWizard />
             )}
           </div>
-          <div className="flex flex-col">
-            {data.map((fullPost) => (
-              <Post key={fullPost.post.id} {...fullPost} />
-            ))}
-          </div>
+
+          <Feed />
         </div>
       </main>
     </>
@@ -49,6 +46,28 @@ const Home: NextPage = () => {
 };
 
 export default Home;
+
+const Feed = () => {
+  const { data, isLoading: postLoading } = api.post.getAll.useQuery();
+
+  if (postLoading) {
+    return (
+      <div className="flex grow items-center justify-center">
+        <LoadingSpinner size={60} />
+      </div>
+    );
+  }
+
+  if (!data) return <div>Something went wrong</div>;
+
+  return (
+    <div className="flex flex-col">
+      {data.map((fullPost) => (
+        <Post key={fullPost.post.id} {...fullPost} />
+      ))}
+    </div>
+  );
+};
 
 type PostWithUser = RouterOutputs["post"]["getAll"][number];
 
