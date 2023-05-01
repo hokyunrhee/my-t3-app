@@ -10,6 +10,8 @@ import Head from "next/head";
 import { api } from "~/utils/api";
 import { LoadingSpinner } from "~/components/loading-spinner";
 import { Post } from "~/components/post";
+import { PageLayout } from "~/components/layout";
+import { generateSSGHelpers } from "~/server/helpers/ssg-helpers";
 
 const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
   username,
@@ -74,20 +76,10 @@ const ProfileFeed = (props: { userId: string }) => {
   );
 };
 
-import { createServerSideHelpers } from "@trpc/react-query/server";
-import { appRouter } from "~/server/api/root";
-import superjson from "superjson";
-import { prisma } from "~/server/db";
-import { PageLayout } from "~/components/layout";
-
 export const getStaticProps = async (
   context: GetStaticPropsContext<{ slug: string }>
 ) => {
-  const helpers = createServerSideHelpers({
-    router: appRouter,
-    ctx: { prisma, userId: null },
-    transformer: superjson,
-  });
+  const helpers = generateSSGHelpers();
 
   const slug = context.params?.slug;
 
