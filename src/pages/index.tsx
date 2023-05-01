@@ -1,17 +1,13 @@
 import { type NextPage } from "next";
 import Image from "next/image";
 import { SignInButton, useUser } from "@clerk/nextjs";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
 
-import { type RouterOutputs, api } from "~/utils/api";
+import { api } from "~/utils/api";
 import { LoadingSpinner } from "~/components/loading-spinner";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import Link from "next/link";
 import { PageLayout } from "~/components/layout";
-
-dayjs.extend(relativeTime);
+import { Post } from "~/components/post";
 
 const Home: NextPage = () => {
   const { isSignedIn, isLoaded: userLoaded } = useUser();
@@ -57,40 +53,6 @@ const Feed = () => {
       {data.map((fullPost) => (
         <Post key={fullPost.post.id} {...fullPost} />
       ))}
-    </div>
-  );
-};
-
-type PostWithUser = RouterOutputs["posts"]["getAll"][number];
-
-const Post = (props: PostWithUser) => {
-  const { post, author } = props;
-
-  return (
-    <div key={post.id} className="flex gap-3 border-b border-slate-400 p-4">
-      <Image
-        src={author.profileImageUrl}
-        alt={`@${author.username}`}
-        className="h-14 w-14 rounded-full"
-        width={56}
-        height={56}
-      />
-      <div className="flex flex-col">
-        <div className="flex text-slate-300">
-          <span>
-            <Link href={`/@${author.username}`}>
-              <span>{`@${author.username}`}</span>
-            </Link>
-            ·{" "}
-            <Link href={`/post/${post.id}`}>
-              <span className="text-slate-400">
-                {dayjs(post.createdAt).fromNow()}
-              </span>
-            </Link>
-          </span>
-        </div>
-        <span className="text-xl">{post.content}</span>
-      </div>
     </div>
   );
 };

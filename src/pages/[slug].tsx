@@ -6,7 +6,10 @@ import {
 } from "next";
 import Image from "next/image";
 import Head from "next/head";
+
 import { api } from "~/utils/api";
+import { LoadingSpinner } from "~/components/loading-spinner";
+import { Post } from "~/components/post";
 
 const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
   username,
@@ -37,13 +40,39 @@ const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
         </div>
         <div className="h-[64px]" />
         <div className="p-4 text-xl font-bold">{`@${data.username ?? ""}`}</div>
-        <div className="border-b border-slate-400"></div>
+
+        <div className="border-b border-slate-400" />
+
+        <ProfileFeed userId={data.id} />
       </PageLayout>
     </>
   );
 };
 
 export default ProfilePage;
+
+const ProfileFeed = (props: { userId: string }) => {
+  const { data, isLoading } = api.posts.getPostsByUserId.useQuery({
+    userId: props.userId,
+  });
+
+  if (isLoading)
+    return (
+      <div className="flex grow items-center justify-center">
+        <LoadingSpinner size={60} />
+      </div>
+    );
+
+  if (!data || data.length === 0) return <div>User has not posted</div>;
+
+  return (
+    <div className="flex flex-col">
+      {data.map((fullPost) => (
+        <Post key={fullPost.post.id} {...fullPost} />
+      ))}
+    </div>
+  );
+};
 
 import { createServerSideHelpers } from "@trpc/react-query/server";
 import { appRouter } from "~/server/api/root";
